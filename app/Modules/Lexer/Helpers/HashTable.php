@@ -2,13 +2,17 @@
 
 namespace App\Modules\Lexer\Helpers;
 
-use App\Modules\Lexer\Models\Lexeme;
+use App\Modules\Lexer\Models\Token;
 
 class HashTable
 {
     protected array $lexTable = [];
 
-    public function addLexem(Lexeme $lexeme)
+    public function __construct()
+    {
+    }
+
+    public function addToken(Token $lexeme)
     {
         $this->lexTable[] = $lexeme;
     }

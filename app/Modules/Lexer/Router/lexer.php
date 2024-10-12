@@ -1,6 +1,6 @@
 <?php
 
-use App\Modules\Lexer\Controller\LexerController;
+use App\Modules\Lexer\Controller\CompilerController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/lexer', [LexerController::class, 'index'])->name('index');
+Route::get('/lexer', [CompilerController::class, 'index'])->name('index');
