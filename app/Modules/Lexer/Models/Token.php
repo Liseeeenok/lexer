@@ -8,22 +8,27 @@ class Token
         1 => [
             'title' => 'Ключевое слово',
             'preg' => '(program|var|integer|string|begin|end|while|do|if|then|else|writeln|const)\b',
+            'code' => 1,
         ],
         2 => [
             'title' => 'Оператор',
             'preg' => '(\*|\+|\-|/|:=|\<|=|\>)',
+            'code' => 2,
         ],
         3 => [
             'title' => 'Разделитель',
             'preg' => '(\(|\)|,|\.|:|;)',
+            'code' => 3,
         ],
         4 => [
             'title' => 'Литерал',
             'preg' => "(\d+|'[^']*')",
+            'code' => 4,
         ],
         5 => [
             'title' => 'ID',
             'preg' => '([a-zA-Z_]\w*)',
+            'code' => 5,
         ],
     ];
 

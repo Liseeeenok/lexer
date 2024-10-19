@@ -26,4 +26,14 @@ class HashTable
         }
         return $array;
     }
+
+    public function getToken(int $index)
+    {
+        return $this->lexTable[$index];
+    }
+
+    public function getSize()
+    {
+        return count($this->lexTable);
+    }
 }
