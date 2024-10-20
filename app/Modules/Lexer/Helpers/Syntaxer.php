@@ -2,6 +2,7 @@
 
 namespace App\Modules\Lexer\Helpers;
 
+use App\Modules\Lexer\Models\Node;
 use App\Modules\Lexer\Models\Token;
 use RuntimeException;
 
@@ -12,6 +13,10 @@ class Syntaxer
     protected int $start = 0;
 
     protected array $variable = [];
+
+    protected Node $mainNode;
+
+    protected Node $actualNode;
 
     public function __construct(protected HashTable $table)
     {
@@ -24,9 +29,13 @@ class Syntaxer
         {
             $this->start = 0;
             $this->ans = '';
+            $node = new Node('main');
+            $this->mainNode = $node;
+            $this->actualNode = $this->mainNode;
             $this->parseName();
             $this->parseVariable();
             $this->parseBody();
+            dd($this->mainNode);
         }
        catch (\Exception $e)
        {
@@ -37,16 +46,21 @@ class Syntaxer
 
     protected function parseName()
     {
-        if ($this->expectToken([
+        $node = $this->actualNode;
+        $this->actualNode = new Node('name programm');
+        if ($token = $this->expectToken([
             'title' => 'Ключевое слово program',
             'preg' => 'program',
         ], false, false))
         {
-            $this->expectToken(Token::$lexems[5]);
-            $this->expectToken([
+            $this->actualNode->addToken($token);
+            $this->actualNode->addToken($this->expectToken(Token::$lexems[5]));
+            $this->actualNode->addToken($this->expectToken([
                 'title' => ';',
                 'preg' => ';',
-            ], false);
+            ], false));
+            $node->addNode($this->actualNode);
+            $this->actualNode = $node;
         }
     }
 
@@ -57,47 +71,62 @@ class Syntaxer
 
     protected function parseVar()
     {
-        if ($this->expectToken([
+        $node = $this->actualNode;
+        $this->actualNode = new Node('Объявление переменных');
+        if ($token = $this->expectToken([
             'title' => 'Ключевое слово var',
             'preg' => 'var',
         ], false, false))
         {
-            while ($this->getVariable())
+            $this->actualNode->addToken($token);
+            while ($token = $this->getVariable())
             {
-                if (!$this->expectToken([
+                $this->actualNode->addToken($token);
+                $token = $this->expectToken([
                     'title' => ',',
                     'preg' => ',',
-                ], false, false))
+                ], false, false);
+                if (!$token)
                 {
-                    if ($this->expectToken([
+                    if ($token = $this->expectToken([
                         'title' => ': или ,',
                         'preg' => ':',
                     ], false))
                     {
-                        $type = $this->expectToken(Token::$lexems[1]);
+                        $this->actualNode->addToken($token);
+                        $token = $this->expectToken(Token::$lexems[1]);
+                        $type = $token->lexeme;
                         $this->setType($type);
-                        $this->expectToken([
+                        $this->actualNode->addToken($token);
+                        $this->actualNode->addToken($this->expectToken([
                             'title' => ';',
                             'preg' => ';',
-                        ], false);
+                        ], false));
                     }
                 }
+                else
+                {
+                    $this->actualNode->addToken($token);
+                }
             }
+            $node->addNode($this->actualNode);
+            $this->actualNode = $node;
         }
     }
 
     protected function getVariable()
     {
-        if ($this->table->getToken($this->start)->code === 5)
+        $token = $this->table->getToken($this->start);
+        if ($token->code === 5)
         {
-            $this->variable[$this->table->getToken($this->start)->lexeme] = true;
+            $this->variable[$token->lexeme] = true;
             $this->start++;
-            return $this->table->getToken($this->start)->lexeme;
+            return $token;
         }
         return false;
     }
 
-    protected function expectToken(array $lexeme, bool $compareCode = true, bool $throw = true)
+    protected function expectToken(array $lexeme, bool $compareCode = true, bool $throw = true) : null|Token|bool
     {
         if ($this->table->getSize() === $this->start)
         {
@@ -109,9 +138,9 @@ class Syntaxer
         {
             if ($this->table->getToken($this->start)->code === $lexeme['code'])
             {
-                $lex = $this->table->getToken($this->start)->lexeme;
+                $token = $this->table->getToken($this->start);
                 $this->start++;
-                return $lex;
+                return $token;
             }
             elseif ($throw)
             {
@@ -122,11 +151,11 @@ class Syntaxer
         }
         else
         {
-            $lex = $this->table->getToken($this->start)->lexeme;
-            if ($lex === $lexeme['preg'])
+            $token = $this->table->getToken($this->start);
+            if ($token->lexeme === $lexeme['preg'])
             {
                 $this->start++;
-                return $lex;
+                return $token;
             }
             elseif ($throw)
             {
@@ -138,16 +167,21 @@ class Syntaxer
 
     protected function parseBody()
     {
-        if ($this->expectToken([
+        $node = $this->actualNode;
+        $this->actualNode = new Node('Тело программы');
+        if ($token = $this->expectToken([
             'title' => 'Ключевое слово begin',
             'preg' => 'begin',
         ], false, false))
         {
+            $this->actualNode->addToken($token);
             $this->parseBegin();
-            $this->expectToken([
+            $this->actualNode->addToken($this->expectToken([
                 'title' => '.',
                 'preg' => '.',
-            ], false);
+            ], false));
+            $node->addNode($this->actualNode);
+            $this->actualNode = $node;
         }
     }
 
@@ -164,30 +198,41 @@ class Syntaxer
 
     protected function parseBegin()
     {
-        while (!$this->expectToken([
+        while (!($token = $this->expectToken([
             'title' => 'Ключевое слово end',
             'preg' => 'end',
-        ], false, false))
+        ], false, false)))
         {
             $this->switchAction();
         }
+        $this->actualNode->addToken($token);
     }
 
     protected function switchAction()
     {
         switch (true)
         {
-            case ($this->expectToken(Token::$lexems[5], true, false)):
+            case ($token = $this->expectToken(Token::$lexems[5], true, false)):
             {
+                $node = $this->actualNode;
+                $this->actualNode = new Node('Присваивание переменной');
+                $this->actualNode->addToken($token);
                 $this->parseAssignment();
+                $node->addNode($this->actualNode);
+                $this->actualNode = $node;
                 break;
             }
-            case ($this->expectToken([
+            case ($token = $this->expectToken([
                 'preg' => 'while',
                 'title' => 'Ключевое слово while',
             ], false, false)):
             {
+                $node = $this->actualNode;
+                $this->actualNode = new Node('Цикл while');
+                $this->actualNode->addToken($token);
                 $this->parseWhile();
+                $node->addNode($this->actualNode);
+                $this->actualNode = $node;
                 break;
             }
             case ($this->expectToken([
@@ -215,33 +260,38 @@ class Syntaxer
 
     protected function parseWhile()
     {
-        $this->expectToken([
+        $this->actualNode->addToken($this->expectToken([
             'title' => '(',
             'preg' => '(',
-        ], false);
+        ], false));
 
         $this->parseExpression();
 
-        $this->expectToken([
+        $this->actualNode->addToken($this->expectToken([
             'title' => ')',
             'preg' => ')',
-        ], false);
+        ], false));
 
-        $this->expectToken([
+        $this->actualNode->addToken($this->expectToken([
             'title' => 'do',
             'preg' => 'do',
-        ], false);
+        ], false));
 
-        if ($this->expectToken([
+        if ($token = $this->expectToken([
             'title' => 'Ключевое слово begin',
             'preg' => 'begin',
         ], false, false))
         {
+            $node = $this->actualNode;
+            $this->actualNode = new Node('Блок кода');
+            $this->actualNode->addToken($token);
             $this->parseBegin();
-            $this->expectToken([
+            $this->actualNode->addToken($this->expectToken([
                 'title' => ';',
                 'preg' => ';',
-            ], false);
+            ], false));
+            $node->addNode($this->actualNode);
+            $this->actualNode = $node;
         }
         else
         {
@@ -326,26 +376,36 @@ class Syntaxer
 
     protected function parseAssignment()
     {
-        $this->expectToken([
+        $this->actualNode->addToken($this->expectToken([
             'title' => 'Оператор :=',
             'preg' => ':=',
-        ], false);
+        ], false));
 
         $this->parseExpression();
 
-        $this->expectToken([
+        $this->actualNode->addToken($this->expectToken([
             'title' => ';',
             'preg' => ';',
-        ], false);
+        ], false));
     }
 
     protected function parseExpression()
     {
-        while ($this->expectToken(Token::$lexems[5], true, false) || $this->expectToken(Token::$lexems[4], true, false))
+        $node = $this->actualNode;
+        $this->actualNode = new Node('Выражение');
+        while ($token = ($this->expectToken(Token::$lexems[5], true, false) ?: $this->expectToken(Token::$lexems[4], true, false)))
         {
-            if (!$this->expectToken(Token::$lexems[2], true, false))
+            $this->actualNode->addToken($token);
+            $token = $this->expectToken(Token::$lexems[2], true, false);
+            if (!$token)
             {
+                $node->addNode($this->actualNode);
+                $this->actualNode = $node;
                 break;
+            }
+            else
+            {
+                $this->actualNode->addToken($token);
             }
         }
     }
