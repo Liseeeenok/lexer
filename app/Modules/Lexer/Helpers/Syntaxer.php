@@ -226,20 +226,30 @@ class Syntaxer
                 $this->actualNode = $node;
                 break;
             }
-            case ($this->expectToken([
+            case ($token = $this->expectToken([
                 'preg' => 'if',
                 'title' => 'Ключевое слово if',
             ], false, false)):
             {
+                $node = $this->actualNode;
+                $this->actualNode = new Node('Блок if');
+                $this->actualNode->addToken($token);
                 $this->parseIf();
+                $node->addNode($this->actualNode);
+                $this->actualNode = $node;
                 break;
             }
-            case ($this->expectToken([
+            case ($token = $this->expectToken([
                 'preg' => 'writeln',
                 'title' => 'Ключевое слово writeln',
             ], false, false)):
             {
+                $node = $this->actualNode;
+                $this->actualNode = new Node('Функция writeln');
+                $this->actualNode->addToken($token);
                 $this->parseWriteLn();
+                $node->addNode($this->actualNode);
+                $this->actualNode = $node;
                 break;
             }
             default:
@@ -292,46 +302,57 @@ class Syntaxer
 
     protected function parseIf()
     {
-        $this->expectToken([
+        $this->actualNode->addToken($this->expectToken([
             'title' => '(',
             'preg' => '(',
-        ], false);
+        ], false));
 
         $this->parseExpression();
 
-        $this->expectToken([
+        $this->actualNode->addToken($this->expectToken([
             'title' => ')',
             'preg' => ')',
-        ], false);
+        ], false));
 
-        $this->expectToken([
+        $this->actualNode->addToken($this->expectToken([
             'title' => 'then',
             'preg' => 'then',
-        ], false);
+        ], false));
 
-        if ($this->expectToken([
+        if ($token = $this->expectToken([
             'title' => 'Ключевое слово begin',
             'preg' => 'begin',
         ], false, false))
         {
+            $node = $this->actualNode;
+            $this->actualNode = new Node('Блок кода');
+            $this->actualNode->addToken($token);
             $this->parseBegin();
+            $node->addNode($this->actualNode);
+            $this->actualNode = $node;
         }
         else
         {
             $this->switchAction();
         }
 
-        while ($this->expectToken([
+        while ($token = $this->expectToken([
             'title' => 'Ключевое слово else',
             'preg' => 'else',
         ], false, false))
         {
-            if ($this->expectToken([
+            $this->actualNode->addToken($token);
+            if ($token = $this->expectToken([
                 'title' => 'Ключевое слово begin',
                 'preg' => 'begin',
             ], false, false))
             {
+                $node = $this->actualNode;
+                $this->actualNode = new Node('Блок кода');
+                $this->actualNode->addToken($token);
                 $this->parseBegin();
+                $node->addNode($this->actualNode);
+                $this->actualNode = $node;
             }
             else
             {
@@ -339,30 +360,30 @@ class Syntaxer
             }
         }
 
-        $this->expectToken([
+        $this->actualNode->addToken($this->expectToken([
             'title' => ';',
             'preg' => ';',
-        ], false);
+        ], false));
     }
 
     protected function parseWriteLn()
     {
-        $this->expectToken([
+        $this->actualNode->addToken($this->expectToken([
             'title' => '(',
             'preg' => '(',
-        ], false);
+        ], false));
 
         $this->parseExpression();
 
-        $this->expectToken([
+        $this->actualNode->addToken($this->expectToken([
             'title' => ')',
             'preg' => ')',
-        ], false);
+        ], false));
 
-        $this->expectToken([
+        $this->actualNode->addToken($this->expectToken([
             'title' => ';',
             'preg' => ';',
-        ], false);
+        ], false));
     }
 
     protected function parseAssignment()
