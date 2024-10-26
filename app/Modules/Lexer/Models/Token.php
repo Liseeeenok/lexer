@@ -48,4 +48,10 @@ class Token
             'start' => $this->start,
         ];
     }
+
+    public function formAns(int $level)
+    {
+        $indent = str_repeat(" ", $level);
+        return $indent . "|-" . "Токен: " . $this->lexeme . "\n";
+    }
 }

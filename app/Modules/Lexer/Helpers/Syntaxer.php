@@ -25,29 +25,20 @@ class Syntaxer
 
     protected function parseSyntaxis()
     {
-        try
-        {
-            $this->start = 0;
-            $this->ans = '';
-            $node = new Node('main');
-            $this->mainNode = $node;
-            $this->actualNode = $this->mainNode;
-            $this->parseName();
-            $this->parseVariable();
-            $this->parseBody();
-            dd($this->mainNode);
-        }
-       catch (\Exception $e)
-       {
-            dd($e);
-            $this->ans = $e->getMessage();
-       }
+        $this->start = 0;
+        $this->ans = '';
+        $node = new Node('Программа:');
+        $this->mainNode = $node;
+        $this->actualNode = $this->mainNode;
+        $this->parseName();
+        $this->parseVariable();
+        $this->parseBody();
     }
 
     protected function parseName()
     {
         $node = $this->actualNode;
-        $this->actualNode = new Node('name programm');
+        $this->actualNode = new Node('Название программы');
         if ($token = $this->expectToken([
             'title' => 'Ключевое слово program',
             'preg' => 'program',
@@ -412,6 +403,6 @@ class Syntaxer
 
     public function formAns()
     {
-        return 'test';
+        return $this->mainNode->formAns(0);
     }
 }

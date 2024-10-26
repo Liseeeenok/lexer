@@ -62,8 +62,15 @@ class Compiler extends Component
     public function parseSyntaxis()
     {
         $this->parseLexems();
-        $this->syntaxer = new Syntaxer($this->table);
+        try
+        {
+            $this->syntaxer = new Syntaxer($this->table);
 
-        $this->ans = $this->syntaxer->formAns();
+            $this->ans = $this->syntaxer->formAns();
+        }
+        catch (\Exception $e)
+        {
+            $this->ans = $e->getMessage();
+        }
     }
 }

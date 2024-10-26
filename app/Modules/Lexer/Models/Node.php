@@ -20,14 +20,21 @@ class Node
         }
     }
 
-    public function addNode(Node $node)
+    public function addNode(Node &$node)
     {
-        $node->setLevel($this->level + 1);
         $this->lists[] = $node;
     }
 
-    public function setLevel(int $level)
+    public function formAns(int $level)
     {
-        $this->level = $level;
+        $indent = str_repeat(" ", $level);
+        $ans = $indent . "|-Узел: " . $this->name . "\n";
+
+        foreach ($this->lists as $list)
+        {
+            $ans .=  $list->formAns($level + 1);
+        }
+
+        return $ans;
     }
 }
