@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Modules\Lexer\Helpers\Compiler as HelpersCompiler;
 use Livewire\Component;
 use App\Modules\Lexer\Helpers\HashTable;
 use App\Modules\Lexer\Helpers\Lexer;
@@ -12,6 +13,8 @@ class Compiler extends Component
     protected Lexer $lexer;
 
     protected Syntaxer $syntaxer;
+
+    protected HelpersCompiler $compiler;
 
     protected HashTable $table;
 
@@ -70,6 +73,22 @@ class Compiler extends Component
         }
         catch (\Exception $e)
         {
+            $this->ans = $e->getMessage();
+        }
+    }
+
+    public function compile()
+    {
+        $this->parseSyntaxis();
+        try
+        {
+            $this->compiler = new HelpersCompiler($this->syntaxer->getMainNode());
+
+            $this->ans = $this->compiler->formPsevdocode();
+        }
+        catch (\Exception $e)
+        {
+            dd($e);
             $this->ans = $e->getMessage();
         }
     }

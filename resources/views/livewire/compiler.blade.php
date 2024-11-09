@@ -66,7 +66,7 @@
             <div class="container_buttons">
                 <button wire:click="parseLexems">Лексер</button>
                 <button wire:click="parseSyntaxis">Синтаксер</button>
-                <button>Компилятор</button>
+                <button wire:click="compile">Компилятор</button>
             </div>
         </div>
         <div class="answer">

@@ -32,6 +32,20 @@ class Token
         ],
     ];
 
+    public static array $translatePsevdocode = [
+        'begin' => '',
+        ':=' => '=',
+        ';' => "\n",
+        'while' => 'Пока',
+        'do' => "\n",
+        'end' => "Конец конуструкции \n",
+        'if' => 'Если',
+        'then' => "\n",
+        'else' => "Иначе \n",
+        'writeln' => 'Вывести',
+        '.' => 'Конец программы',
+    ];
+
     public function __construct(
         public string $lexeme,
         public int $code,
@@ -53,5 +67,18 @@ class Token
     {
         $indent = str_repeat(" ", $level);
         return $indent . "|-" . "Токен: " . $this->lexeme . "\n";
+    }
+
+    public function formPsevdocode(int $level, bool $tab = false)
+    {
+        $text = isset(static::$translatePsevdocode[$this->lexeme]) ? static::$translatePsevdocode[$this->lexeme] : $this->lexeme;
+
+        if ($text === '')
+        {
+            return '';
+        }
+
+        $indent = $tab ? str_repeat(" ", $level) : ' ';
+        return $indent . $text;
     }
 }

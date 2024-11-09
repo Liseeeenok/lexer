@@ -426,4 +426,9 @@ class Syntaxer
     {
         return $this->mainNode->formAns(0);
     }
+
+    public function getMainNode()
+    {
+        return $this->mainNode;
+    }
 }
